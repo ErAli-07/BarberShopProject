@@ -2,15 +2,31 @@ import java.util.Vector;
 
 public class Barber extends Person {
 
+    //Private Attributes
     private final String name;
     private BarberShop barberShop;
+    private boolean running;
 
+    //Constructor and Set Methods
     Barber(String name){
         this.name = name;
+        this.running = true;
     }
 
     public void setBarberShop(BarberShop barberShop){
         this.barberShop = barberShop;
+    }
+
+    //Action of the Barber
+    public synchronized  void stopBarber(){
+        running = false;
+        synchronized(barberShop){
+            barberShop.notify();
+        }
+    }
+
+    private synchronized boolean isRunning(){
+        return running;
     }
 
     public void entrance(){
@@ -35,28 +51,36 @@ public class Barber extends Person {
         System.out.println(this.name + " finished cutting " + thisClient.getName() + "'s hair.");
     }
 
+    //Run Function
     @Override
     public void run() {
-        while(true){
+        while(isRunning()||!barberShop.isShopFree()){
             Client thisClient = null;
 
             synchronized(barberShop){
-                if (barberShop.isShopFree()) {
+                while (barberShop.isShopFree() && isRunning()) {
                     isNotWorking();
                     try {
                         barberShop.wait();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
+                        return;
                     }
                 }
-                entrance();
-                thisClient = barberShop.getFirstClient();
+
+                if(!barberShop.isShopFree()){
+                    entrance();
+                    thisClient = barberShop.getFirstClient();
+                }
             }
-            isWorking();
-            isCutting(thisClient);
-            synchronized(barberShop){
-                barberShop.removeClient();
+            if(thisClient != null){
+                isWorking();
+                isCutting(thisClient);
+                synchronized(barberShop){
+                    barberShop.removeClient();
+                }
             }
         }
+        System.out.println(this.name + " the barber is closing the barber shop.");
     }
 }
