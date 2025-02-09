@@ -5,7 +5,7 @@ public class Main {
     public static void main(String[] args) {
         Scanner my_scan = new Scanner(System.in);
 
-        //Insertion of the data
+        //Management of the incoming data
         System.out.println("Insert the name of the barberShop: ");
         String name = my_scan.nextLine();
 
@@ -24,26 +24,19 @@ public class Main {
         barberThread.start();
 
         //Barber Shop Management
-        int i = 1;
-        while(true){
-            Client new_client = new Client("T"+i);
-            barberShop.addClient(new_client);
-            i++;
-
-            synchronized (barberShop) {
-                barberShop.notify();
-            }
-
-            try{
+        try{
+            int i = 1;
+            while (i <= 10) {
+                Client new_client = new Client("T" + i);
+                barberShop.addClient(new_client);
+                i++;
                 Thread.sleep(2000);
-            }catch(InterruptedException e){
-                Thread.currentThread().interrupt();
             }
-
-            if(i==10){
-                break;
-            }
+        }catch(InterruptedException e){
+            Thread.currentThread().interrupt();
+        }finally{
+            my_scan.close();
+            barber1.stopBarber();
         }
-        my_scan.close();
     }
 }
